@@ -1,5 +1,6 @@
-Framework for simulating painting 3D objects using robot arms
-Made for Embedded Systems Master Graduation Project at TU Eindhoven
+Framework for simulating painting 3D objects using robot arms\
+Made for Embedded Systems Master Graduation Project at TU Eindhoven\
+\
 Creator: Vincent Geleijnse
 
 ## Prerequisites:
