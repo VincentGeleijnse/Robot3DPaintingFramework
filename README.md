@@ -1,6 +1,6 @@
 ## Prerequisites:
-    - Microsoft Visual Studio 2019 set up for Unreal Engine (URL0)
-    - Unreal Engine 5.01
+- Microsoft Visual Studio 2019 set up for Unreal Engine (https://docs.unrealengine.com/5.0/en-US/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/)
+- Unreal Engine 5.01 (https://www.unrealengine.com/en-US/unreal-engine-5)
 
 ## First time setup:
 1. Right-click RobotArm.uproject in this directory and select `Generate Visual Studio project files`
