@@ -1,11 +1,16 @@
+Framework for simulating painting 3D objects using robot arms
+Made for Embedded Systems Master Graduation Project at TU Eindhoven
+Creator: Vincent Geleijnse
+
 ## Prerequisites:
 - Microsoft Visual Studio 2019 set up for Unreal Engine (https://docs.unrealengine.com/5.0/en-US/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/)
 - Unreal Engine 5.01 (https://www.unrealengine.com/en-US/unreal-engine-5)
 
 ## First time setup:
-1. Right-click RobotArm.uproject in this directory and select `Generate Visual Studio project files`
-2. After completion open RobotArm.uproject and select OK for any prompts that come up.
-3. The Unreal Engine editor should open displaying the robot arm and a canvas.
+1. Clone or download this repository.
+2. Right-click RobotArm.uproject in the main directory and select `Generate Visual Studio project files`
+3. After completion open RobotArm.uproject and select OK for any prompts that come up.
+4. The Unreal Engine editor should open displaying the robot arm and a canvas.
 
 ## Running the framework
 1. Open the Unreal Engine project file `RobotArm.uproject`
