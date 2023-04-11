@@ -16,7 +16,7 @@ Creator: Vincent Geleijnse
 ## Running the framework
 1. Open the Unreal Engine project file `RobotArm.uproject`
 2. Press the play button
-3. Go through the steps in the shown user interface (for first time I reccommend just picking existing image and color palette, to verify if the drawing framework functions, the positioning of the image does have to be adjusted in order to make the robot able to reach the whole path though (i.e. scale image down and center the image on the robot arm and draw on upper half of sphere works for the default canvas position)
+3. Go through the steps in the shown user interface (for the first time I recommend just picking existing image and color palette, to verify if the drawing framework functions, the positioning of the image does have to be adjusted in order to make the robot able to reach the whole path though (i.e. scale image down and center the image on the robot arm and draw on upper half of sphere works for the default canvas position), a custom image and color can be used, however, it is worth to note that the size and complexity of the image and the number of colors chosen can greatly impact the time it takes to draw and the processing time required before drawing.
 4. Watch the robot draw
 5. 2D representation and results are saved in  `Content/step1-2/UnrealOutput` and `Content/step1-2/Result`
 
