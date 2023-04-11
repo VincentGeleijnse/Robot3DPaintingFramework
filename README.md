@@ -30,3 +30,8 @@ Creator: Vincent Geleijnse
 - `Content/step1-2/src` contains the source code for the image processing tasks and the open-source LaserGRBL software modified to automatically generate paths using the path generation settings.
 - `Content/step1-2/UnrealOutput` contains the 2D representation of drawings the framework completed, and the visualized difference with the original image. 
 - `Content/step1-2/UVMaps` contains masks for each canvas used, these masks are used for comparison in the case of wrapping. (only the head canvas has a distinct mask, the other UV mappings are fully mapped on the 2D square texture and are therefore just white images)
+
+## Adjusting parameters in Unreal Engine Project:
+some of the parameters can only be adjusted in the Unreal Engine Editor.
+- Canvas & Pen: The canvas and pen settings can be adjusted by selecting the canvas in the scene. In the details tab parameters can be adjusted such as pen width, canvas mesh and canvas position/scale.
+- Inverse kinematics settings: The inverse kinematics settings can be adjusted by finding the IKsolver actor in the actor outliner, and adjusting the parameters such as max randomizations and max iterations
