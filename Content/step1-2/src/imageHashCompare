@@ -1,0 +1,23 @@
+from PIL import Image
+import imagehash
+
+#from pprint import pprint
+#pprint(vars(imagehash))
+
+hash = imagehash.average_hash(Image.open('..\Intermediate\indexed.png'),1000)
+print(hash)
+#otherhash = imagehash.average_hash(Image.open(r'..\Intermediate\indexed.png'),10)
+otherhash = imagehash.average_hash(Image.open(r'..\Result\output.png'),1000)
+
+print(otherhash)
+
+print(hash == otherhash)
+
+print(hash - otherhash)  # hamming distance
+
+
+#diff = hash.hash_diff(otherhash)
+
+#print('Hash has {} matching segments with {} total hamming distance'.format(
+#			diff[0], diff[1]
+#		))

@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+
+import sys
+import numpy as np
+from PIL import Image, ImageOps
+import os.path
+from os import listdir
+from os.path import isfile, join
+import os
+
+USAGE = """
+# Usage
+
+> Create black and white mask from UV image
+ python3 MaskUV PATH_TO_INPUT_FILE 
+    
+
+"""
+
+
+
+def maskUV(UVPath, silent=False):
+    
+    uvmap = Image.open(UVPath,'r')
+    uvmap = ImageOps.flip(uvmap)
+    na1 = np.array(uvmap.convert('RGBA'))
+    width, height = uvmap.size
+    out = Image.new('RGB', uvmap.size, (255, 255, 255, 255))
+    for x in range(width):
+        for y in range(height):
+            if na1[y][x][3] == 0:
+                out.putpixel((x, y), (0,0,0));
+        b = "Masking Progression: " + str(round((x/width)*100,1));
+        print("\r", "%s%%"%b, end="")
+    output_path = UVPath.removesuffix('.png') + '_Mask.png'
+    print("\n saving UV Mask in: " + output_path);
+    out.save(output_path, "PNG")
+"""
+main: Parse sys args and pass values to create_new_img_mask.
+Params()
+Returns()
+"""
+def main():
+    UVPath = str(sys.argv[1]);
+
+    maskUV(UVPath);
+    return
+
+
+if __name__ == '__main__':
+    main()

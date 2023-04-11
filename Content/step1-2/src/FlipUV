@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+
+import sys
+import numpy as np
+from PIL import Image, ImageOps
+import os.path
+from os import listdir
+from os.path import isfile, join
+import os
+
+USAGE = """
+# Usage
+
+> Crop and scale RenderTarget Texture to correct dimensions
+ python3 cropScaleRenderTarget PATH_TO_INPUT_FILE 
+    (The Input file should be a paletted PNG image)
+
+"""
+
+
+
+def flipImage(uvPath, silent=False):
+    uvmap = Image.open(uvPath,'r')
+    uvmap = ImageOps.flip(uvmap)
+    
+   
+    output_path = uvPath.removesuffix('.png') + '_Flipped.png'
+    print("saving UV Mask in: " + output_path);
+    uvmap.save(output_path, "PNG")
+"""
+main: Parse sys args and pass values to create_new_img_mask.
+Params()
+Returns()
+"""
+def main():
+    uvPath = str(sys.argv[1]);
+
+    flipImage(uvPath);
+    return
+
+
+if __name__ == '__main__':
+    main()

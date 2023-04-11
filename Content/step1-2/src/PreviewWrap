@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+
+import sys
+import numpy as np
+from PIL import Image
+import os.path
+from os import listdir
+from os.path import isfile, join
+import os
+
+USAGE = """
+# Usage
+
+> Compare two images pixel by pixel and print out the percentage of the image that is different
+ python3 PixelByPixelCompare PATH_TO_INPUT_FILE PATH_FOR_OUTPUT 
+    (The Input file should be a paletted PNG image)
+
+> List all colors contained in an image.
+ ./color-mask colors ./PATH_TO_IMAGE_FILE
+    (The Image file should be a paletted PNG image)
+"""
+
+
+
+    
+    
+"""
+compareImages: compares each pixel of two images
+Params(
+    maskPath[str]: Relative path to an image file,
+    imgPath[str]: Relative path to an image file,
+    silent[bool]: Default False | Set to True to block print statements
+    )
+Returns( image )
+"""
+    
+def previewWrap(UVPath, imgPath, silent=False):
+
+    
+    splinescale = 0.75;
+    splineWidth = 100;
+    splineHeight = 90;
+    wrapScale = 0.001;
+    offsetX = 0.1
+    offsetY = 0.89
+    
+
+    
+    
+    
+    UVimg = Image.open(UVPath, 'r')
+    img = Image.open(imgPath, 'r')
+    width, height = UVimg.size
+    scaleWidth =int(splinescale*splineWidth*width*wrapScale) ;
+    scaleHeight = int(splinescale*splineHeight*height*wrapScale)
+    img2 = img.resize((scaleWidth , scaleHeight));
+    imgArr = np.array(img2.convert('RGB'))
+    left = int(offsetX*width);
+    right = left+scaleWidth;
+    top = int(offsetY*height);
+    bottom = top+scaleHeight;
+
+    diffCount = 0;
+     
+    out = Image.new('RGB', UVimg.size, (255, 255, 255))
+    for x in range(left,right):
+        
+        for y in range(top,bottom): 
+                   
+            out.putpixel((x, y), (imgArr[y-top][x-left][0],imgArr[y-top][x-left][1],imgArr[y-top][x-left][2]))
+    output_path = imgPath.removesuffix('.png') + '_Scaled.png'
+    print("saving scaled preview image in: " + output_path);
+    out.save(output_path, "PNG")     
+    return 
+    
+    
+
+          
+    
+
+
+"""
+main: Parse sys args and pass values to create_new_img_mask.
+Params()
+Returns()
+"""
+def main():
+
+    UVPath = str(sys.argv[1]);
+    imgPath = str(sys.argv[2]);
+    previewWrap(UVPath, imgPath);
+    return
+
+
+if __name__ == '__main__':
+    main()

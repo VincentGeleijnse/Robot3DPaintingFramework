@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+
+import tkinter as tk
+import tkinter.filedialog
+from tkinter.colorchooser import askcolor
+from tkinter import simpledialog
+from tkinter import messagebox
+from PIL import ImageTk, Image
+import os.path
+
+def resize_image(event):
+        new_width = event.width
+        new_height = event.height
+        image = copy_of_image.resize((new_width, new_height))
+        photo = ImageTk.PhotoImage(image)
+        label.config(image = photo)
+        label.image = photo #avoid garbage collection
+
+
+#open file browse dialog for user to find image
+
+file_path_string = tkinter.filedialog.askopenfilename();
+
+#check if color palette file already exists
+colorpath = os.path.realpath('Input\colors.txt');
+file_exists = os.path.exists(colorpath);
+
+#ask if user wants to use existing color palette (if its there)
+if(file_exists == True):
+    q = messagebox.askyesno("Question","Use existing color palette?");
+    
+image = Image.open(file_path_string, 'r')
+#if color palette does not exist or user wants to create a new one
+if(file_exists == False or q == False):
+
+    #display picked image for reference
+    root = tk.Tk()
+    root.title("Title")
+    root.geometry('600x600')
+    
+    
+    copy_of_image = image.copy()
+    photo = ImageTk.PhotoImage(image)
+    label = tk.Label(root, image = photo)
+    label.bind('<Configure>', resize_image)
+    label.pack(fill=tk.BOTH, expand = tk.YES)
+    
+    #ask user how many colors the palette should consist of
+    answer = simpledialog.askinteger("Input", "How many colors to index image to?"),
+    if(answer[0] > 0):
+        colors = [];
+        #ask users to input as many colors as was previously picked by user.
+        for x in range(answer[0]):
+            colors.append(askcolor(title="Choose color " + str(x+1) + " in drawing order"));
+        #write colors to Input/colors.txt which will be used for color-indexing, color masking in step 1 and for pen color in UnrealEngine
+        with open(colorpath, 'w') as f:    
+            for c in colors:
+                colorstr = str(c[0]).replace("(","");
+                colorstr = colorstr.replace(")","");
+                colorstr = colorstr.replace(" ","");
+                f.write(colorstr+"\n");
+           
+output_path = os.path.realpath('Input\input.png');         
+image.save(output_path, "PNG")         
+

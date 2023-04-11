@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+
+import sys
+import numpy as np
+from PIL import Image
+from PIL import ImageCms
+from PIL import ImageTk
+import os.path
+from os import listdir
+from os.path import isfile, join
+import os
+
+from skimage import io, color
+
+
+USAGE = """
+# Usage
+
+> Compare two images pixel by pixel and print out the percentage of the image that is different
+ python3 PixelByPixelCompare PATH_TO_INPUT_FILE PATH_FOR_OUTPUT 
+    (The Input file should be a paletted PNG image)
+
+> List all colors contained in an image.
+ ./color-mask colors ./PATH_TO_IMAGE_FILE
+    (The Image file should be a paletted PNG image)
+"""
+
+
+
+    
+    
+"""
+compareImages: compares each pixel of two images
+Params(
+    origImg_path[str]: Relative path to an image file,
+    drawnImg_path[str]: Relative path to an output image file,
+    silent[bool]: Default False | Set to True to block print statements
+    )
+Returns( image )
+"""
+    
+def compareImages(origImg_path, drawnImg_path, silent=False):
+
+    
+    #im1 = Image.open(origImg_path, 'r')
+    #im11 = im1.convert('RGB')
+    #im2 = Image.open(drawnImg_path, 'r').convert('RGB')
+    #im22 = im1.convert('RGB')
+    
+    #rgb1 = io.imread(origImg_path)[:,:,:3]
+    #lab1 = color.rgb2lab(rgb1)
+    #rgb2 = io.imread(drawnImg_path)[:,:,:3]
+    #lab2 = color.rgb2lab(rgb2)
+    
+    ## Convert to Lab colourspace
+    #srgb_p = ImageCms.createProfile("sRGB")
+    #lab_p  = ImageCms.createProfile("LAB")
+    #rgb2lab = ImageCms.buildTransformFromOpenProfiles(srgb_p, lab_p, "RGB", "LAB")
+    #Lab1 = ImageCms.applyTransform(im11, rgb2lab)
+    #Lab2 = ImageCms.applyTransform(im22, rgb2lab)
+    
+    
+    im1 = Image.open(origImg_path, 'r')
+    img1_conv = convert_to_srgb(im1);
+    im2 = Image.open(drawnImg_path, 'r')
+    img2_conv = convert_to_srgb(im2);
+   
+    na1 = img1_conv.load()
+    na2 = img2_conv.load()
+   
+   
+    #na1 = np.array(lab1)
+    #na2 = np.array(lab2)
+    
+    
+    
+    
+    diffCount = 0;
+    whiteCount = 0;
+    width, height = im1.size
+    out = Image.new('RGB', im1.size, (255, 255, 255))
+    for x in range(width):
+        for y in range(height):
+            val = 0;
+            #print(str(na1[y][x]))
+            if not np.array_equal(na1[x,y][:3],na2[x,y][:3]):
+                
+                #diffCount = diffCount +1;
+                dist = EucDist(na1[x,y][:3],na2[x,y][:3]);
+                val = dist/441.67; #441 is the largest euclidian distance possible in RGB color space (white to black) this way we get a value between 0-1 we can use in our heat-map
+                
+                col = GetHeatMapColor(val);
+                #print(str(col));
+                out.putpixel((x, y), col)
+            elif np.array_equal(na1[x,y][:3],na2[x,y][:3]) and np.array_equal(na1[x,y][:3], (255,255,255)):
+                whiteCount= whiteCount+1;
+            diffCount = diffCount + val;
+    diffpctAll = 100-(diffCount/((width*height)))*100
+    diffpctDrawn = 100-(diffCount/((width*height)-whiteCount))*100
+    print(diffCount)
+    print(str(diffpctAll) +" is the weighted average similarity of the whole image");
+    print(str(diffpctDrawn) +" is the weighted average similarity of image ignoring whitespace");
+    output_path = drawnImg_path.removesuffix('.png') + '_Weighteddiff.png'
+    print("saving difference mask in: " + output_path);
+    out.save(output_path, "PNG")     
+    output_path = drawnImg_path.removesuffix('.png') +'_origin.png'
+    im1.save(output_path, "PNG")  
+
+    with open('./Result/ConfigData.csv', 'r') as f:
+        lines = f.readlines()
+        last_line = lines[-1]
+        last_line = last_line.replace("DIFFCOUNTW",str(diffCount));
+        last_line = last_line.replace("DIFFPCTW_ALL",str(diffpctAll));
+        last_line = last_line.replace("DIFFPCTW_NOWHITE",str(diffpctDrawn));
+        lines[-1] = last_line;
+    with open('./Result/ConfigData.csv', 'w') as f:
+        for line in lines:
+            f.write(line)
+    return 
+    
+    
+def EucDist(p,q):
+    #dist = np.sqrt(((q[0]-p[0])**2) + ((q[1]-p[1])**2) + ((q[2]-p[2])**2));
+    point1 = np.array((p[0], p[1], p[2]))
+    point2 = np.array((q[0], q[1], q[2]))
+ 
+    # calculating Euclidean distance
+    # using linalg.norm()
+    dist = np.linalg.norm(point1 - point2)
+    return dist
+          
+    
+def GetHeatMapColor(val):
+    NUM_COLORS = 2;
+    color = ((255,255,255),(0,0,0)); #, (0,255,0), (255,255,0), (255,0,0) );
+    #A static array of 5 colors:  (blue, cyan  green,  yellow,  red) using {r,g,b} for each.
+    idx1 = 0;        # |-- Our desired color will be between these two indexes in "color".
+    idx2 = 0;        # |
+    fractBetween = 0;  # Fraction between "idx1" and "idx2" where our value is.
+  
+    if(val <= 0):
+        idx1 = 0; 
+        idx2 = 0# accounts for an input <=0
+    elif(val >= 1):     # accounts for an input >=0
+        idx1 = NUM_COLORS-1;
+        idx2 = NUM_COLORS-1;
+    else:
+        value= val * (NUM_COLORS-1);       # Will multiply value by 3.
+        idx1  = (int)(value);                  # Our desired color will be after this index.
+        idx2  = idx1+1;                        # ... and before this index (inclusive).
+        fractBetween = value - float(idx1);    # Distance between the two indexes (0-1).
+    red   = int((color[idx2][0] - color[idx1][0])*fractBetween + color[idx1][0]);
+    green = int((color[idx2][1] - color[idx1][1])*fractBetween + color[idx1][1]);
+    blue  = int((color[idx2][2] - color[idx1][2])*fractBetween + color[idx1][2]);
+
+    col = (red,green,blue);
+    return col;
+    
+    
+def convert_to_srgb(img):
+    '''Convert PIL image to sRGB color space (if possible)'''
+    icc = img.info.get('icc_profile', '')
+    if icc:
+        io_handle = io.BytesIO(icc)     # virtual file
+        src_profile = ImageCms.ImageCmsProfile(io_handle)
+        dst_profile = ImageCms.createProfile('sRGB')
+        img = ImageCms.profileToProfile(img, src_profile, dst_profile)
+    return img    
+    
+
+"""
+main: Parse sys args and pass values to create_new_img_mask.
+Params()
+Returns()
+"""
+def main():
+
+    origImg = str(sys.argv[1]);
+    drawnImg = str(sys.argv[2]);
+    compareImages(origImg, drawnImg);
+    return
+
+
+if __name__ == '__main__':
+    main()

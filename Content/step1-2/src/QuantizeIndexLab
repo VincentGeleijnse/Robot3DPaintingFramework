@@ -1,0 +1,309 @@
+#!/usr/bin/env python3
+
+import sys
+import numpy as np
+from PIL import Image
+from PIL import ImageCms
+from PIL import ImageTk
+import os.path
+from os import listdir
+from os.path import isfile, join
+import os
+import tkinter as tk
+import tkinter.filedialog
+from tkinter.colorchooser import askcolor
+from tkinter import simpledialog
+from tkinter import messagebox
+from skimage import color
+import io
+
+USAGE = """
+# Usage
+
+> Crop and scale RenderTarget Texture to correct dimensions
+ python3 cropScaleRenderTarget PATH_TO_INPUT_FILE 
+    (The Input file should be a paletted PNG image)
+
+"""
+def resize_image(event):
+        new_width = event.width
+        new_height = event.height
+        image = copy_of_image.resize((new_width, new_height))
+        photo = ImageTk.PhotoImage(image)
+        label.config(image = photo)
+        label.image = photo #avoid garbage collection
+
+def QuantizeImage(outputPath, silent=False):
+
+    
+    inputPath = tkinter.filedialog.askopenfilename();
+    
+    
+    im = Image.open(inputPath, 'r')
+    img_conv = convert_to_srgb(im);
+    colorpath = os.path.realpath('Input\colors.txt');
+    file_exists = os.path.exists(colorpath);
+
+    #ask if user wants to use existing color palette (if its there)
+    if(file_exists == True):
+        q = messagebox.askyesno("Question","Use existing color palette?");
+    if(file_exists == False or q == False):
+
+        #display picked image for reference
+        root = tk.Tk()
+        root.title("Title")
+        root.geometry('600x600')
+        
+        
+        copy_of_image = im.copy()
+        photo = ImageTk.PhotoImage(im)
+        label = tk.Label(root, im = photo)
+        label.bind('<Configure>', resize_image)
+        label.pack(fill=tk.BOTH, expand = tk.YES)
+    
+        #ask user how many colors the palette should consist of
+        answer = simpledialog.askinteger("Input", "How many colors to index image to?"),
+        if(answer[0] > 0):
+            colors = [];
+            #ask users to input as many colors as was previously picked by user.
+            for x in range(answer[0]):
+                colors.append(askcolor(title="Choose color " + str(x+1) + " in drawing order"));
+            #write colors to Input/colors.txt which will be used for color-indexing, color masking in step 1 and for pen color in UnrealEngine
+            with open(colorpath, 'w') as f:    
+                for c in colors:
+                    colorstr = str(c[0]).replace("(","");
+                    colorstr = colorstr.replace(")","");
+                    colorstr = colorstr.replace(" ","");
+                    f.write(colorstr+"\n");
+    
+    
+    
+    imagepropPath = 'Input\ImageProperties.txt';
+    width, height = im.size
+    with open(imagepropPath, 'w') as f:
+        Text = "width="+str(width)+"\n"+"height="+str(height)+"\n";
+        f.write(Text);
+        
+    
+    
+
+    na = img_conv.load()
+
+    #print(na[200,200])
+
+   
+    palette = [];
+    palette2 = [];
+    colorpath = os.path.realpath('Input\colors.txt');
+    with open(colorpath, 'r') as f:
+        i = 0;
+        for line in f:
+            colarrstr = line.split(",");
+            colarr = (int(colarrstr[0]),int(colarrstr[1]),int(colarrstr[2]))
+            colarr2 = color.rgb2lab((int(colarrstr[0]),int(colarrstr[1]),int(colarrstr[2])),illuminant='D65', observer='2')
+            i = i + 1;
+            palette.append(colarr);
+            palette2.append(colarr);
+            
+    
+    #print(palette)
+    
+    
+    
+    out = Image.new('RGB', im.size, (255, 255, 255))
+    out2 = Image.new('RGB', im.size, (255, 255, 255))
+    out3 = Image.new('RGB', im.size, (255, 255, 255))
+    out4 = Image.new('RGB', im.size, (255, 255, 255))
+    for x in range(width):
+        for y in range(height):
+            #col = GetClosestColorL((na[x,y][0],na[x,y][1],na[x,y][2]),palette);
+            col = GetClosestColorR((na[x,y][0],na[x,y][1],na[x,y][2]),palette);
+            #col2 = GetClosestColorR2((na[x,y][0],na[x,y][1],na[x,y][2]),palette);
+            col3 = GetClosestColorL((na[x,y][0],na[x,y][1],na[x,y][2]),palette);
+            out.putpixel((x, y), col)
+            #out2.putpixel((x, y), col2)
+            out4.putpixel((x, y), col3)
+            out3.putpixel((x, y), (na[x,y][0],na[x,y][1],na[x,y][2]))
+            
+        b = "Quantizing Progression: " + str(round((x/width)*100,1));
+        print("\r", "%s%%"%b, end="")
+    
+
+    print("\n saving Indexed Image in: " + outputPath);
+    outputPath2 = outputPath.removesuffix('.png') + '_RGBDist.png'
+    outputPath4 = outputPath.removesuffix('.png') + '_LABDist.png'
+    outputPath3 = outputPath.removesuffix('.png') + '_adada.png'
+    out.save(outputPath, ) #icc_profile=originalColorProfile.tobytes())
+    #out2.save(outputPath2,)  #icc_profile=originalColorProfile.tobytes())
+    out3.save(outputPath3, ) #icc_profile=originalColorProfile.tobytes())
+    out4.save(outputPath4, )
+    return 
+    
+    
+
+          
+    
+
+
+"""
+main: Parse sys args and pass values to create_new_img_mask.
+Params()
+Returns()
+"""
+def main():
+
+    inputPath = str(sys.argv[1]);
+    outputPath = str(sys.argv[2]);
+    QuantizeImage(outputPath);
+    return
+    
+def GetClosestColorL(pixel,palette):
+    closestDistance = 10000000;
+    #print(pixel)
+    for (col) in palette:
+        #print(col)
+        #print(pixel)
+        c = RGBtoLAB(col);
+        p = RGBtoLAB(pixel);
+        distance = EuclidianDistance(c,p);
+        #if (not np.array_equal(pixel,(255,255,255))):
+            #print(str(distance) +" " + str(col) +" "+ str(pixel))
+        if(distance < closestDistance):
+            closestColor = col;
+            closestDistance = distance;
+    return closestColor
+    
+def GetClosestColorR(pixel,palette):
+    closestDistance = 10000000;
+    #print(pixel)
+    for col in palette:
+        #print(col)
+        #print(pixel)
+        distance = RedMean(pixel,col);
+        if(distance < closestDistance):
+            closestColor = col;
+            closestDistance = distance;
+    return closestColor
+    
+def GetClosestColorR2(pixel,palette):
+    closestDistance = 10000000;
+    #print(pixel)
+    for col in palette:
+        #print(col)
+        #print(pixel)
+        distance = EuclidianDistance(pixel,col);
+        if(distance < closestDistance):
+            closestColor = col;
+            closestDistance = distance;
+    return closestColor
+        
+def EuclidianDistance(p,q):
+    point1 = np.array((p[0], p[1], p[2]));
+    point2 = np.array((q[0], q[1], q[2]));
+    # calculating Euclidean distance
+    # using linalg.norm()
+    dist = np.linalg.norm(point1 - point2);
+    return dist;
+    
+def EuclidianDistanceL(p,q):
+    point1 = np.array((p[1], p[2]));
+    point2 = np.array((q[1], q[2]));
+    # calculating Euclidean distance
+    # using linalg.norm()
+    dist1 = np.linalg.norm(point1 - point2);
+    dist = dist1 + np.abs(q[0]-p[0]);
+    return dist;
+    
+def RedMean(p,q):
+    dr = p[0]-q[0]
+    dg = p[1]-q[1]
+    db = p[2]-q[2]
+    # calculating Euclidean distance
+    # using linalg.norm()
+    r = 0.5*(p[0]+q[0])
+    dist = np.sqrt((2+(r/256))*(dr**2)+4*(dg**2)+(2+((255-r)/256))*(db**2))
+    return dist;
+    
+def RGBtoLAB(rgb):
+    return(XYZtoLAB(RGBtoXYZ(rgb)));
+
+def RGBtoXYZ(rgb):
+    r = rgb[0] / 255;
+    g = rgb[1] / 255;
+    b = rgb[2] / 255;
+    
+    if (r > 0.04045):
+        r = pow(((r + 0.055) / 1.055), 2.4);
+        
+    else:
+        r = r / 12.92;
+    
+
+    if (g > 0.04045):
+        g = pow(((g + 0.055) / 1.055), 2.4);
+       
+    else:
+        g = g / 12.92;
+    
+
+    if (b > 0.04045):
+        b = pow(((b + 0.055) / 1.055), 2.4);
+       
+    else:
+        b = b / 12.92;
+    
+
+    x = r * 100;
+    y = g * 100;
+    z = b * 100;
+
+    return (x,y,z);
+    
+def XYZtoLAB(xyz):
+    refX = 95.047;
+    refY = 100;
+    refZ = 108.883;
+    #ref based on 2 degrees standard Observer D65 daylight
+
+    x = xyz[0] / refX;
+    y = xyz[1] / refY;
+    z = xyz[2] / refZ;
+
+    if (x > 0.008856):
+        x = pow(x, 1/3);
+    else:
+        x = (7.787 * x) + (16 / 116);
+    
+
+    if (y > 0.008856):
+        y = pow(y, (1/3));
+    else:
+        y = (7.787 * y) + (16 / 116);
+    
+
+    if (z > 0.008856):
+        z = pow(z, 1/3);
+    else:
+        z = (7.787 * z) + (16 / 116);
+    
+
+    
+    L = (116*y)-16;
+    a = 500*(x-y);
+    b = 200*(y-z);
+    #print((L,a,b))
+    return(L,a,b);
+   
+
+def convert_to_srgb(img):
+    '''Convert PIL image to sRGB color space (if possible)'''
+    icc = img.info.get('icc_profile', '')
+    if icc:
+        io_handle = io.BytesIO(icc)     # virtual file
+        src_profile = ImageCms.ImageCmsProfile(io_handle)
+        dst_profile = ImageCms.createProfile('sRGB')
+        img = ImageCms.profileToProfile(img, src_profile, dst_profile)
+    return img
+
+if __name__ == '__main__':
+    main()

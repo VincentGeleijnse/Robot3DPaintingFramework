@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+
+import sys
+import numpy as np
+from PIL import Image
+import os.path
+from os import listdir
+from os.path import isfile, join
+import os
+
+USAGE = """
+# Usage
+
+> Compare two images pixel by pixel and print out the percentage of the image that is different
+ python3 PixelByPixelCompare PATH_TO_INPUT_FILE PATH_FOR_OUTPUT 
+    (The Input file should be a paletted PNG image)
+
+> List all colors contained in an image.
+ ./color-mask colors ./PATH_TO_IMAGE_FILE
+    (The Image file should be a paletted PNG image)
+"""
+
+
+
+    
+    
+"""
+compareImages: compares each pixel of two images
+Params(
+    maskPath[str]: Relative path to an image file,
+    imgPath[str]: Relative path to an image file,
+    silent[bool]: Default False | Set to True to block print statements
+    )
+Returns( image )
+"""
+    
+def ApplyMask(maskPath, imgPath, silent=False):
+
+    
+    mask = Image.open(maskPath, 'r')
+    maskArr = np.array(mask.convert('RGB'))
+    img = Image.open(imgPath, 'r')
+    imgArr = np.array(img.convert('RGB'))
+    width, height = mask.size
+    width1, height1 = img.size  
+  
+    print(width);
+    print(height);
+    print(width1);
+    print(height1);
+
+    out = Image.new('RGB', mask.size, (0, 0, 0))
+    for x in range(width):
+        for y in range(height):
+            if np.array_equal(maskArr[y][x],(255,255,255)):
+                out.putpixel((x, y), (imgArr[y][x][0],imgArr[y][x][1],imgArr[y][x][2]))
+            else:
+                out.putpixel((x, y),(255,255,255))       
+    output_path = imgPath.removesuffix('.png') + '_masked.png'
+    print("saving masked image in: " + output_path);
+    out.save(output_path, "PNG")     
+    return 
+    
+    
+
+          
+    
+
+
+"""
+main: Parse sys args and pass values to create_new_img_mask.
+Params()
+Returns()
+"""
+def main():
+
+    maskPath = str(sys.argv[1]);
+    imgPath = str(sys.argv[2]);
+    ApplyMask(maskPath, imgPath);
+    return
+
+
+if __name__ == '__main__':
+    main()
